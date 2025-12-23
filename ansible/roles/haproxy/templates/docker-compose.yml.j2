@@ -1,0 +1,47 @@
+x-logging:
+  &default-logging
+  driver: "{{ logging_driver | default('json-file') }}"
+  options:
+    max-size: "{{ logging_max_size | default('1m') }}"
+    max-file: "{{ logging_max_file | default('1') }}"
+#    tag: "{{ logging_tag | default('{{ \"{{.Name}}\" }}') }}"
+
+services:
+  haproxy:
+    image: "{{ image | default('haproxy:latest') }}"
+    container_name: "{{ container_name | default('haproxy') }}"
+
+    {% if host_network | default(true) %}
+
+    network_mode: "host"
+
+    {% else %}
+    ports:
+      {% for p in ports | default(['80:80','8406:8406','8407:8407']) %}
+      - "{{ p }}"
+      {% endfor %}
+    {% endif %}
+
+    restart: "{{ restart_policy | default('unless-stopped') }}"
+
+    deploy:
+      resources:
+        limits:
+          cpus: "{{ limits_cpus | default('2') }}"
+          memory: "{{ limits_memory | default('4096M') }}"
+        reservations:
+          cpus: "{{ reservations_cpus | default('1') }}"
+          memory: "{{ reservations_memory | default('2048M') }}"
+
+    volumes:
+      - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:rw"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://{{ health_host | default('localhost') }}:{{ stats_port | default('8406') }}/stats"]
+      interval: "{{ health_interval | default('30s') }}"
+      timeout: "{{ health_timeout | default('5s') }}"
+      retries: {{ health_retries | default(3) }}
+      start_period: "{{ health_start_period | default('10s') }}"
+
+    logging: *default-logging
+

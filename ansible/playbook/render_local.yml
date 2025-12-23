@@ -1,0 +1,12 @@
+---
+- name: Render haproxy.cfg locally for validation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Render HAProxy config from template
+      template:
+        src: "../roles/haproxy/templates/haproxy.cfg.j2"
+        dest: "./haproxy.cfg"
+

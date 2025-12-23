@@ -1,0 +1,5 @@
+---
+- name: Restart haproxy via Docker Compose
+  command: docker compose restart haproxy
+  args:
+    chdir: "{{ project_dir }}"

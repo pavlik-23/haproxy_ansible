@@ -1,0 +1,42 @@
+---
+
+######### DOCKER #############
+
+project_dir: "/storage2/haproxy_ansible/"
+image: "haproxy:3.0-alpine"
+container_name: "haproxy"
+restart_policy: "unless-stopped"
+host_network: true
+ports:
+  - "80:80"
+  - "8406:8406"
+  - "8407:8407"
+
+limits_cpus: "2"     
+limits_memory: "4096M"
+reservations_cpus: "1" 
+reservations_memory: "2048M"
+
+logging_driver: "json-file"
+logging_max_size: "1m"
+logging_max_file: "1"
+#logging_tag: "{{.Name}}"
+
+########## HAPROXY #############
+
+haproxy_global_log_level: "warning"
+#haproxy_stats_socket_path: "/var/run/haproxy.sock"
+haproxy_stats_socket_path: "/tmp/haproxy.sock"
+haproxy_stats_port: 8406
+haproxy_stats_uri: "/stats"
+haproxy_stats_refresh: "10s"
+haproxy_stats_user: "admin"
+haproxy_stats_password: "admin"
+
+haproxy_prometheus_enabled: false
+# haproxy_prometheus_port: 8407
+
+haproxy_timeout_connect: "5s"
+haproxy_timeout_client: "50s"
+haproxy_timeout_server: "50s"
+
