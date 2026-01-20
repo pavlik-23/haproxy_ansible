@@ -7,16 +7,19 @@ x-logging:
 
 services:
   haproxy:
-    image: "{{ image | default('haproxy:latest') }}"
+    image: "{{ image | default('haproxy:3.0-alpine') }}"
     container_name: "{{ container_name | default('haproxy') }}"
     network_mode: "host"
     restart: "{{ restart_policy | default('unless-stopped') }}"
-    mem_limit: "{{ memory_limit }}"
+    mem_limit: "{{ memory_limit | default('4096m') }}"
+
+    command: haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p /tmp/haproxy.pid
+
     volumes:
       - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:rw"
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://{{ health_host | default('localhost') }}:{{ stats_port | default('8406') }}/stats"]
+      test: ["CMD-SHELL", "wget -qO- http://{{ health_host | default('localhost') }}:{{ stats_port | default('8406') }}/stats >/dev/null 2>&1 || exit 1"]
       interval: "{{ health_interval | default('30s') }}"
       timeout: "{{ health_timeout | default('5s') }}"
       retries: {{ health_retries | default(3) }}
