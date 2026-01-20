@@ -7,6 +7,7 @@ image: "haproxy:3.0-alpine"
 container_name: "haproxy"
 restart_policy: "unless-stopped"
 host_network: true
+memory_limit: 4096m
 ports:
   - "80:80"
   - "8406:8406"
