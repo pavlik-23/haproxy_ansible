@@ -1,7 +1,8 @@
 ---
-
-- name: Validate haproxy config in container
-  command: docker exec haproxy haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
-  
 - name: Reload haproxy gracefully
-  command: docker exec haproxy sh -c 'haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p /tmp/haproxy.pid -sf $(cat /tmp/haproxy.pid)'
+  block:
+    - name: Validate haproxy config in container
+      command: docker exec haproxy haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
+
+    - name: Reload haproxy gracefully
+      command: docker exec haproxy sh -c "haproxy -W -db -f /usr/local/etc/haproxy/haproxy.cfg -p /tmp/haproxy.pid -sf $(cat /tmp/haproxy.pid)"
