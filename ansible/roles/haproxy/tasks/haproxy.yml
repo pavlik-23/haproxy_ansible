@@ -28,5 +28,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ project_dir }}"
     state: present
-    build: always
+    pull: always
 
+- name: Apply pending handlers (reload if config changed)
+  meta: flush_handlers
