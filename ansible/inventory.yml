@@ -1,4 +1,4 @@
 haproxy:
   hosts:
-    "10.192.20.41":
+    "10.192.23.157":
       ansible_user: root
