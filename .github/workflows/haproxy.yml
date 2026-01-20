@@ -1,0 +1,60 @@
+name: HAProxy CI/CD (self-hosted)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  haproxy-check:
+    name: Validate HAProxy config
+    runs-on: [self-hosted,office,docker]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check HAProxy config syntax (Docker haproxy:3.0-alpine)
+        run: |
+          echo "Checking HAProxy configuration syntax..."
+          docker run --rm \
+            -v $PWD/ansible/roles/haproxy/files/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+            --entrypoint haproxy \
+            haproxy:3.0-alpine -c -f /usr/local/etc/haproxy/haproxy.cfg
+          echo "HAProxy config syntax is VALID"
+
+
+  haproxy-deploy:
+    name: Deploy HAProxy via Ansible
+    runs-on: [self-hosted,office,docker]
+    needs: haproxy-check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start ssh-agent and add SSH key
+        shell: bash
+        run: |
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          cat > ~/.ssh/config <<EOF
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+
+      - name: Deploy with Ansible (Docker librespace/ansible:9.13.0)
+        run: |
+          echo "Deploying HAProxy via Ansible..."
+          docker run --rm \
+            -v $PWD:/work \
+            -w /work \
+            -v ~/.ssh:/root/.ssh:ro \
+            librespace/ansible:9.13.0 \
+            ansible-playbook ansible/playbook/haproxy.yml -i ansible/inventory.yml
+          echo "HAProxy deployed successfully"
+
