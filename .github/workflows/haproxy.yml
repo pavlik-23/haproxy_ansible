@@ -36,7 +36,10 @@ jobs:
         shell: bash
         run: |
           eval "$(ssh-agent -s)"
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+          ssh-add /tmp/id_rsa
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -47,14 +50,37 @@ jobs:
             UserKnownHostsFile /dev/null
           EOF
 
-      - name: Deploy with Ansible (Docker librespace/ansible:9.13.0)
+#      - name: Start ssh-agent and add SSH key
+#        shell: bash
+#        run: |
+#          eval "$(ssh-agent -s)"
+#          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+
+#          mkdir -p ~/.ssh
+#          chmod 700 ~/.ssh
+
+#          cat > ~/.ssh/config <<EOF
+#          Host *
+#            StrictHostKeyChecking no
+#            UserKnownHostsFile /dev/null
+#          EOF
+
+
+
+#      - name: Deploy with Ansible (Docker librespace/ansible:9.13.0)
+#        run: |
+#          echo "Deploying HAProxy via Ansible..."
+#          docker run --rm \
+#            -v $PWD:/work \
+#            -w /work \
+#            -v ~/.ssh:/root/.ssh:ro \
+#            librespace/ansible:9.13.0 \
+#            ansible-playbook ansible/playbook/haproxy.yml -i ansible/inventory.yml
+#          echo "HAProxy deployed successfully"
+
+
+      - name: Deploy with Ansible (local runner)
         run: |
           echo "Deploying HAProxy via Ansible..."
-          docker run --rm \
-            -v $PWD:/work \
-            -w /work \
-            -v ~/.ssh:/root/.ssh:ro \
-            librespace/ansible:9.13.0 \
-            ansible-playbook ansible/playbook/haproxy.yml -i ansible/inventory.yml
+          ansible-playbook ansible/playbook/haproxy.yml -i ansible/inventory.yml
           echo "HAProxy deployed successfully"
-
